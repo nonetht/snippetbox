@@ -7,6 +7,11 @@ import (
 	"strconv"
 )
 
+/*
+GET: 方法是仅返回数据，不修改程序了内容的路由。
+POST: 这是改变应用程序内容的路由。
+*/
+
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello from Snippetbox"))
 }
@@ -35,15 +40,26 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet...")) // 显示存过件新片段的表单
 }
 
+func snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	// Use w.WriteHeader() method to send 201 status code
+	w.WriteHeader(http.StatusCreated)
+
+	// Use w.Write() method to write the response body as normal
+	w.Write([]byte("Save a new snippet..."))
+
+}
+
 func main() {
 	// Register the two new handler functions and corresponding route patterns with
 	// the servemux, in exactly the same way that we did before.
 	mux := http.NewServeMux()
 	// 单纯的 "/" 只会起到全局捕获效果；写成 "/{$}" 代表着匹配单独的斜杠
-	mux.HandleFunc("/{$}", home)
-	mux.HandleFunc("/snippet/view/{id}", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	mux.HandleFunc("GET /{$}", home) // HTTP方法区分大小写，并且只能用大写字母。
+	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
+	mux.HandleFunc("GET /snippet/create", snippetCreate)
 
+	//Create the new route, which is restricted to POST requests
+	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
 	log.Print("starting server on :4000")
 
 	// Listen采用：host:port格式，如果省略主机部分，那么将监听所有网络接口
