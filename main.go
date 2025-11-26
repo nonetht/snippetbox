@@ -41,7 +41,7 @@ func main() {
 	mux := http.NewServeMux()
 	// 单纯的 "/" 只会起到全局捕获效果；写成 "/{$}" 代表着匹配单独的斜杠
 	mux.HandleFunc("/{$}", home)
-	mux.HandleFunc("/snippet/view", snippetView)
+	mux.HandleFunc("/snippet/view/{id}", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 
 	log.Print("starting server on :4000")
