@@ -1,11 +1,25 @@
 package main
 
 import (
-	"log"
+	"flag"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 func main() {
+	// Difine a new command-line flag with name 'addr', a default value of ":4000"
+	// usage: 'xxx': short help text explaining what the flag controls
+	addr := flag.String("addr", ":4000", "HTTP network address")
+
+	// Use flag.Parse() function to parse the command-line flag.
+	// Read in the command-line flag value and assigns it to the addr variable
+	flag.Parse()
+
+	// Use the logger.New() function to initialize a new structed logger, which writes
+	// to the standard out stream and uses default settings
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	mux := http.NewServeMux()
 
 	// Create a file server which serves files out of the "./ui/static" directory
@@ -24,8 +38,13 @@ func main() {
 	mux.HandleFunc("GET /snippet/create", snippetCreate)
 	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
 
-	log.Print("starting server on :4000")
+	// 使用Info函数，来记录服务器启动记录。
+	logger.Info("starting server", slog.Any("addr", ":4000"))
 
-	err := http.ListenAndServe(":4000", mux)
-	log.Fatal(err)
+	err := http.ListenAndServe(*addr, mux)
+
+	// And, use Error() method 记录 http.ListenAndServe 的错误信息。
+	// 随后调用 os.Exit(1)来终止程序，并伴有终止符1。
+	logger.Error(err.Error())
+	os.Exit(1)
 }
