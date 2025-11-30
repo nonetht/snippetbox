@@ -10,13 +10,15 @@ func main() {
 
 	// Create a file server which serves files out of the "./ui/static" directory
 	// Note that the path given to the http.Dir function is relative to the project
-	fileServer := http.FileServer(http.Dir("./ut/static/"))
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
 
 	// Use the mux.Handle() function to register the file server
 	// StripPrefix Remove the given prefix from the given URL
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
 	// Register the other application routes as normal
+	// http.HandlerFunc 适配器工作原理就是，自动为函数添加 `ServeHTTP`方法。执行时，自动调用原始函数内部代码。
+	// 将普通函数强制转换为满足 `http.Handler` 接口的类型
 	mux.HandleFunc("GET /{$}", home)
 	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
 	mux.HandleFunc("GET /snippet/create", snippetCreate)

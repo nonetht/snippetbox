@@ -11,13 +11,18 @@ import (
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Server", "Go")
 
-	// 初始化包含两个路径的切片，主要的是，如果是切片应该放在第一个位置上。
+	// Initialize a slice containing the paths to the two files. It's important
+	// to note that the file containing our base template must be the *first*
+	// file in the slice.
 	files := []string{
 		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
 		"./ui/html/pages/home.tmpl",
 	}
 
-	// Use the template.ParseFiles() function to read the template file into
+	// Use the template.ParseFiles() function to read the files and store the
+	// templates in a template set. Notice that we use ... to pass the contents
+	// of the files slice as variadic arguments.
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
 		log.Print(err.Error())
@@ -25,10 +30,9 @@ func home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Then use the Execute() method on the template set to write the
-	// template content as the response body. The last parameter to Execute()
-	// represents any dynamic data that we want to pass in, which for
-	err = ts.Execute(w, nil)
+	// Use the ExecuteTemplate() method to write the content of the "base"
+	// template as the response body.
+	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
