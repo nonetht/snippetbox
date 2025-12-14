@@ -3,9 +3,11 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"log/slog" // 包含内容：时间戳，日志条目严重级别，日志消息，可选数量键值对
+	"log/slog"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql" // 并未使用 mysql 包中的任何内容，只是需要运行驱动程序的 init() 函数
 )
 
 type application struct {
@@ -37,7 +39,6 @@ func main() {
 
 	logger.Info("starting server", slog.String("addr", ":4000"))
 
-	// 调用 app.routes() 防范让 servemux 包含我们的路径...
 	err = http.ListenAndServe(*addr, app.routes())
 
 	// 使用 Error 函数来记录任意的 http.ListenAndServe 函数所返回的 Error 严重级别的信息
@@ -46,13 +47,14 @@ func main() {
 	os.Exit(1)
 }
 
+// 实际上并不会创建链接，所做的仅仅是初始化连接池，以供后续调用
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	// Ping 是不是 unix 下的 ping 命令呢？
+	// db.Ping() 创建一个链接，并检查是否有任何错误
 	err = db.Ping()
 	if err != nil {
 		return nil, err
