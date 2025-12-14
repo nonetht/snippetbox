@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"runtime/debug"
 )
 
 // The serverError helper writes a log entry at Error level (including the request
@@ -11,13 +12,11 @@ func (app *application) serverError(w http.ResponseWriter, r *http.Request, err 
 	var (
 		method = r.Method
 		uri    = r.URL.RequestURI()
+		// Use debug.Stack() 获取堆栈追踪信息。
+		trace = string(debug.Stack())
 	)
 
-	// log entry at Error level, including the request method and URL as attributes
-	app.logger.Error(err.Error(), "method", method, "uri", uri)
-	// send a generic 500 internal Server Error response
-	// http.StatusText() 函数，可以返回指定HTTP状态码的可读文本描述，比如：http.StatusText(400) 返回 "Bad Request"
-	// http.StatusText(500) 返回 "Internal Server Error"
+	app.logger.Error(err.Error(), "method", method, "uri", uri, "trace", trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 

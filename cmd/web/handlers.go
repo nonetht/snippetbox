@@ -20,9 +20,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		"./ui/html/pages/home.tmpl",
 	}
 
-	// Use the template.ParseFiles() function to read the files and store the
-	// templates in a template set. Notice that we use ... to pass the contents
-	// of the files slice as variadic arguments.
 	ts, err := template.ParseFiles(files...) // '...'表示变长参数；传递的文件路径必须相对于当前工作目录
 	if err != nil {
 		// 现在呢，home控制器已经成为了application结构体的方法，所以可以访问结构体的字段。
@@ -30,8 +27,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use the ExecuteTemplate() method to write the content of the "base"
-	// template as the response body.
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		app.serverError(w, r, err)
