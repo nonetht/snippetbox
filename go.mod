@@ -6,5 +6,5 @@ go 1.25.4
 // indirect 代表软件包还没有出现在代码库之中的 import 语句之中
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/go-sql-driver/mysql v1.9.3 // indirect
+	github.com/go-sql-driver/mysql v1.9.3
 )
