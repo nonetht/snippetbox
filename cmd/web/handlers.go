@@ -1,59 +1,45 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
+	"log/slog"
 	"net/http"
 	"strconv"
 )
 
-// 让handler函数，成为 application 结构体的方法。并且使用 structured logger
-func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Server", "Go")
-
-	// Initialize a slice containing the paths to the two files. It's important
-	// to note that the file containing our base template must be the *first*
-	// file in the slice.
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-
-	// Use the template.ParseFiles() function to read the files and store the
-	// templates in a template set. Notice that we use ... to pass the contents
-	// of the files slice as variadic arguments.
-	ts, err := template.ParseFiles(files...) // '...'表示变长参数；传递的文件路径必须相对于当前工作目录
-	if err != nil {
-		// 现在呢，home控制器已经成为了application结构体的方法，所以可以访问结构体的字段。
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Use the ExecuteTemplate() method to write the content of the "base"
-	// template as the response body.
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+// homeHandler renders the landing page. Extend templateData to pass dynamic values.
+func homeHandler(logger *slog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Populate template data when templates are wired up.
+		render(logger, w, r, "home.tmpl", nil)
+	})
 }
 
-func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	// 将字符串类型转换为整数类型
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
-		http.NotFound(w, r)
-		return
-	}
+// snippetViewHandler shows a single snippet. Replace stub with real lookup logic.
+func snippetViewHandler(logger *slog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(r.PathValue("id"))
+		if err != nil || id < 1 {
+			clientError(w, http.StatusNotFound)
+			return
+		}
 
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+		// TODO: Load a snippet by ID and pass data into the template.
+		render(logger, w, r, "snippet_view.tmpl", nil)
+	})
 }
 
-func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a form for creating a new snippet..."))
+// snippetCreateHandler displays a form for creating a snippet.
+func snippetCreateHandler(logger *slog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Show the form with any default values or CSRF token.
+		render(logger, w, r, "snippet_create.tmpl", nil)
+	})
 }
 
-func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusCreated) // 响应只能调用一次 `WriteHeader`
-	w.Write([]byte("Save a new snippet..."))
+// snippetCreatePostHandler accepts form submissions to create a snippet.
+func snippetCreatePostHandler(logger *slog.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Parse form data, validate input, and persist to storage.
+		http.Error(w, "snippetCreatePost not implemented yet", http.StatusNotImplemented)
+	})
 }

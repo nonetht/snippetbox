@@ -1,29 +1,30 @@
 package main
 
 import (
+	"log/slog"
 	"net/http"
 )
 
-// The serverError helper writes a log entry at Error level (including the request
-// method and URI as attributes), then sends a generic 500 Internal Server Error
-// response to the user.
-func (app *application) serverError(w http.ResponseWriter, r *http.Request, err error) {
-	var (
-		method = r.Method
-		uri    = r.URL.RequestURI()
-	)
+// templateData holds data passed to templates. Extend this struct as you learn new concepts.
+type templateData struct {
+	// TODO: Add fields for passing dynamic data into templates (e.g. snippets, forms, flash messages).
+}
 
-	// log entry at Error level, including the request method and URL as attributes
-	app.logger.Error(err.Error(), "method", method, "uri", uri)
-	// send a generic 500 internal Server Error response
-	// http.StatusText() 函数，可以返回指定HTTP状态码的可读文本描述，比如：http.StatusText(400) 返回 "Bad Request"
-	// http.StatusText(500) 返回 "Internal Server Error"
+// render is a placeholder to keep handlers lightweight while you wire up templates later.
+// Replace this with real template parsing/caching when ready.
+func render(logger *slog.Logger, w http.ResponseWriter, r *http.Request, page string, data *templateData) {
+	logger.Info("render placeholder", "page", page, "method", r.Method, "uri", r.URL.RequestURI())
+	http.Error(w, "render not implemented for "+page, http.StatusNotImplemented)
+}
+
+// serverError writes a log entry at Error level (including the request method and URI),
+// then sends a generic 500 Internal Server Error response to the user.
+func serverError(logger *slog.Logger, w http.ResponseWriter, r *http.Request, err error) {
+	logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-// The clientError helper sends a specific status code and corresponding description
-// to the user. We'll use this later in the book to send responses like 400 "Bad
-// Request" when there's a problem with the request that the user sent.
-func (app *application) clientError(w http.ResponseWriter, status int) {
+// clientError sends a specific status code and corresponding description to the user.
+func clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
