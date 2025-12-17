@@ -1,13 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
-
-	"snippetbox.yang.net/internal/models"
 )
 
 // 让handler函数，成为 application 结构体的方法。并且使用 structured logger
@@ -20,31 +18,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//for _, snippet := range snippets {
-	//	fmt.Fprintf(w, "%+v\n", snippet)
-	//}
-
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...) // '...'表示变长参数；传递的文件路径必须相对于当前工作目录
-	if err != nil {
-		// 现在呢，home控制器已经成为了application结构体的方法，所以可以访问结构体的字段。
-		app.serverError(w, r, err)
-		return
-	}
-
-	data := templateData{
+	app.render(w, r, http.StatusOK, "home.page.tmpl", templateData{
 		Snippets: snippets,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	})
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +35,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	// If no record is found, return 404 Not Found response
 	snippet, err := app.snippets.Get(id)
 	if err != nil {
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 		} else {
 			app.serverError(w, r, err)
@@ -67,30 +43,10 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Initialize a slice containing the paths to the view.tmpl file,
-	// plus the base layout and navigation partial that we made earlier
-	files := []string{
-		"./ui/html/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/view.tmpl",
-	}
-
-	// Parse the template files...
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// Create an instance of a templateData struct holding the snippet data
-	data := templateData{
+	// Use the new render helper
+	app.render(w, r, http.StatusOK, "snippet.page.tmpl", templateData{
 		Snippet: snippet,
-	}
-
-	err = ts.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-	}
+	})
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {

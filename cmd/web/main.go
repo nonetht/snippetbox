@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,8 +14,9 @@ import (
 )
 
 type application struct {
-	logger   *slog.Logger
-	snippets *models.SnippetModel
+	logger        *slog.Logger
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 // 解析应用程序运行时配置设置，建立处理器依赖关系，运行HTTP服务器
@@ -36,15 +38,21 @@ func main() {
 	// also defer a call to db.Close(), so the connection pool is closed before the main() function exits
 	defer db.Close()
 
-	app := &application{
-		logger:   logger,
-		snippets: &models.SnippetModel{DB: db},
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
 	}
 
-	logger.Info("starting server", slog.String("addr", ":4000"))
+	app := &application{
+		logger:        logger,
+		snippets:      &models.SnippetModel{DB: db},
+		templateCache: templateCache,
+	}
+
+	logger.Info("starting server", slog.String("addr", *addr))
 
 	err = http.ListenAndServe(*addr, app.routes())
-
 	// 使用 Error 函数来记录任意的 http.ListenAndServe 函数所返回的 Error 严重级别的信息
 	// 随机调用 os.Exit(1) 来终止应用
 	logger.Error(err.Error())
