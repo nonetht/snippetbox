@@ -7,6 +7,13 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
+
+	// http.FileServer 将“设定的根目录”和“请求的URL路径”直接拼到一起去硬盘之中寻找文件。
+	fileServer := http.FileServer(http.Dir("./ui/static"))
+
+	// Use the mux.Handle() function...
+	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+
 	mux.HandleFunc("GET /{$}", home)
 	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
 	mux.HandleFunc("GET /snippet/create", snippetCreate)
