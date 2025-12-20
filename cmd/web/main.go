@@ -1,36 +1,56 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"log/slog"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql" // New import
 )
+
+type application struct {
+	logger *slog.Logger
+}
 
 func main() {
 	addr := flag.String("addr", ":4000", "http service address")
+	dsn := flag.String("dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	mux := http.NewServeMux()
 
-	// 将请求 URL 映射到 ./ui/static/ 目录下文件读出来并返回
-	fileServer := http.FileServer(http.Dir("./ui/static"))
+	db, err := openDB(*dsn)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
 
-	// 1.受到 GET /static/ 请求，随即交给 handler 处理
-	// 2. 将请求的开头 "/static" 去掉，比如请求是 /static/css/main.css，最后变成了 ./ui/static/css/main.csss
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	// 初始化一个 application 实例，包含依赖
+	app := &application{
+		logger: logger,
+	}
+	logger.Info("starting server", "addr", *addr)
+	mux := app.routes()
 
-	mux.HandleFunc("GET /{$}", home)
-	//logger.Info("request receivced", "method", "GET", "path", "/")
-
-	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
-	mux.HandleFunc("GET /snippet/create", snippetCreate)
-	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
-
-	logger.Info("starting server", "addr", addr)
-
-	err := http.ListenAndServe(*addr, mux)
+	err = http.ListenAndServe(*addr, mux)
 	logger.Error(err.Error()) // Use Error() method to log any **error message**
 	os.Exit(1)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }
