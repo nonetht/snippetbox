@@ -1,11 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"snippetbox.yang.net/internal/models"
 )
 
 // 让handler函数，成为 application 结构体的方法。并且使用 structured logger
@@ -18,13 +19,17 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, r, http.StatusOK, "home.page.tmpl", templateData{
-		Snippets: snippets,
-	})
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
+	}
+
+	//app.render(w, r, http.StatusOK, "home.page.tmpl", templateData{
+	//	Snippets: snippets,
+	//})
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	// 将字符串类型转换为整数类型
+	// strconv.Atoi 将字符串类型转换为整数类型
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
 		http.NotFound(w, r)
@@ -35,7 +40,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	// If no record is found, return 404 Not Found response
 	snippet, err := app.snippets.Get(id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, models.ErrNoRecord) {
 			http.NotFound(w, r)
 		} else {
 			app.serverError(w, r, err)
@@ -43,10 +48,8 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use the new render helper
-	app.render(w, r, http.StatusOK, "snippet.page.tmpl", templateData{
-		Snippet: snippet,
-	})
+	// Write the snippet data as a plain-text HTTP responses body
+	fmt.Fprintf(w, "%+v", snippet) //
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +68,6 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Redirct the user to the relevant page for the snippet
+	// Redirect the user to the relevant page for the snippet
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }

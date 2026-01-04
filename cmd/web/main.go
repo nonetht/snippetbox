@@ -61,7 +61,7 @@ func main() {
 
 // 实际上并不会创建链接，所做的仅仅是初始化连接池，以供后续调用
 func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", dsn) // 不会创建连接，而是初始化连接池以供后续使用
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +69,7 @@ func openDB(dsn string) (*sql.DB, error) {
 	// db.Ping() 创建一个链接，并检查是否有任何错误
 	err = db.Ping()
 	if err != nil {
+		db.Close() // 如果连接出现错误，我们将关闭连接池
 		return nil, err
 	}
 

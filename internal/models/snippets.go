@@ -20,6 +20,7 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
+// Insert
 func (m *SnippetModel) Insert(title, content string, expires int) (int, error) {
 	// Write the sql statement we want to execute. I've split it over 2 lines
 	// for readability (which is surrounded with backquotes instead of normal double ...)
@@ -36,6 +37,7 @@ func (m *SnippetModel) Insert(title, content string, expires int) (int, error) {
 	}
 
 	// Use the LastInsertId() method on the result to get the ID of your newly inserted record
+	// 值得注意的是，postgreSQL数据库不支持 LastInsertId() 方法
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -98,6 +100,7 @@ func (m *SnippetModel) Latest() ([]Snippet, error) {
 	for rows.Next() {
 		// Create a pointer to a new zeroed Snippet struct
 		var s Snippet
+		// Use rows.Scan() to copy the values from each fields in the row to the new Snippet object that we created.
 		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 		if err != nil {
 			return nil, err
@@ -106,7 +109,7 @@ func (m *SnippetModel) Latest() ([]Snippet, error) {
 		snippets = append(snippets, s)
 	}
 
-	// When the rows.Next() loop has finished we call rows.Err() to ree..
+	// 调用 rows.Err() 方法来获取迭代过程之中遇到的错误。
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
